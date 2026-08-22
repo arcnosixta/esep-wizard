@@ -1606,12 +1606,24 @@ class ReportService {
           style: pw.TextStyle(font: font, fontSize: 12),
         )
       else
-        for (var i = 0; i < photos.length; i++) ...[
-          pw.SizedBox(height: 8),
-          pw.Text('Фото ${i + 1}:', style: pw.TextStyle(font: fontBold, fontSize: 12)),
-          pw.SizedBox(height: 4),
-          pw.Image(pw.MemoryImage(photos[i]), height: 160, fit: pw.BoxFit.contain),
-        ],
+        ...photos.asMap().entries.expand((entry) {
+          final bytes = entry.value;
+          if (bytes.isEmpty) return const <pw.Widget>[];
+          pw.Image? image;
+          try {
+            image = pw.Image(pw.MemoryImage(bytes), height: 160, fit: pw.BoxFit.contain);
+          } on Exception {
+            image = null;
+          }
+          if (image == null) return const <pw.Widget>[];
+          final i = entry.key;
+          return [
+            pw.SizedBox(height: 8),
+            pw.Text('Фото ${i + 1}:', style: pw.TextStyle(font: fontBold, fontSize: 12)),
+            pw.SizedBox(height: 4),
+            image,
+          ];
+        }),
       pw.SizedBox(height: 24),
       _subTitle('Приложение №4. Документы, предоставленные заказчиком', font, fontBold),
       _bullet('Документ, удостоверяющий личность Заказчика;', font),

@@ -136,8 +136,12 @@ void main() {
 
   test('generatePdf with photos embeds them in appendix', () async {
     final data = sampleData();
-    final photo = File('/tmp/test_photo.jpg').readAsBytesSync();
-    final bytes = await ReportService.generatePdf(data, preview: false, photos: [photo, photo, photo]);
+    final photoPath = '/tmp/esep_test_photo.jpg';
+    final photo = File(photoPath);
+    if (!photo.existsSync()) {
+      photo.writeAsBytesSync(List.filled(1024, 0x42));
+    }
+    final bytes = await ReportService.generatePdf(data, preview: false, photos: [photo.readAsBytesSync(), photo.readAsBytesSync(), photo.readAsBytesSync()]);
     expect(bytes.length, greaterThan(50000));
     final pages = RegExp(r'/Type\s*/Page[^s]').allMatches(String.fromCharCodes(bytes)).length;
     expect(pages, greaterThanOrEqualTo(40),

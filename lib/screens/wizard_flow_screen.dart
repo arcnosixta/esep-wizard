@@ -232,10 +232,15 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
   }
 }
 
-class _Step1PropertyType extends StatelessWidget {
+class _Step1PropertyType extends StatefulWidget {
   final Map<String, dynamic> data;
   const _Step1PropertyType({required this.data});
 
+  @override
+  State<_Step1PropertyType> createState() => _Step1PropertyTypeState();
+}
+
+class _Step1PropertyTypeState extends State<_Step1PropertyType> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
@@ -285,9 +290,13 @@ class _Step1PropertyType extends StatelessWidget {
 
   Widget _typeCard(BuildContext context, String label, IconData icon, int index) {
     final c = AppColors.of(context);
-    final selected = data['propertyType'] == index;
+    final selected = widget.data['propertyType'] == index;
     return GestureDetector(
-      onTap: () => data['propertyType'] = index,
+      onTap: () {
+        setState(() {
+          widget.data['propertyType'] = index;
+        });
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
@@ -542,7 +551,11 @@ class _Step3CharacteristicsState extends State<_Step3Characteristics> {
     final c = AppColors.of(context);
     final selected = widget.data['condition'] == value;
     return GestureDetector(
-      onTap: () => widget.data['condition'] = value,
+      onTap: () {
+        setState(() {
+          widget.data['condition'] = value;
+        });
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -705,10 +718,15 @@ class _Step5Documents extends StatelessWidget {
   }
 }
 
-class _Step6Purpose extends StatelessWidget {
+class _Step6Purpose extends StatefulWidget {
   final Map<String, dynamic> data;
   const _Step6Purpose({required this.data});
 
+  @override
+  State<_Step6Purpose> createState() => _Step6PurposeState();
+}
+
+class _Step6PurposeState extends State<_Step6Purpose> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
@@ -747,9 +765,13 @@ class _Step6Purpose extends StatelessWidget {
 
   Widget _purposeCard(BuildContext context, String title, String subtitle) {
     final c = AppColors.of(context);
-    final selected = data['purpose'] == title;
+    final selected = widget.data['purpose'] == title;
     return GestureDetector(
-      onTap: () => data['purpose'] = title,
+      onTap: () {
+        setState(() {
+          widget.data['purpose'] = title;
+        });
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 12),
