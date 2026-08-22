@@ -41,11 +41,74 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
       );
       return;
     }
-    if (_currentStep == 2 && (_data['area'] as String).trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Введите площадь')),
-      );
-      return;
+    if (_currentStep == 2) {
+      final area = (_data['area'] as String).trim();
+      final rooms = (_data['rooms'] as String).trim();
+      final floor = (_data['floor'] as String).trim();
+      final totalFloors = (_data['totalFloors'] as String).trim();
+      final yearBuilt = (_data['yearBuilt'] as String).trim();
+      final condition = (_data['condition'] as String?)?.trim() ?? '';
+      final propertyType = (_data['propertyType'] as int?) ?? 0;
+      if (area.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Введите площадь')),
+        );
+        return;
+      }
+      if (double.tryParse(area.replaceAll(',', '.')) == null || double.parse(area.replaceAll(',', '.')) <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Площадь должна быть числом больше 0')),
+        );
+        return;
+      }
+      if ((propertyType == 0 || propertyType == 1) && rooms.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Введите количество комнат')),
+        );
+        return;
+      }
+      if (propertyType == 0) {
+        if (floor.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Введите этаж')),
+          );
+          return;
+        }
+        if (totalFloors.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Введите этажность дома')),
+          );
+          return;
+        }
+        final floorNum = int.tryParse(floor);
+        final totalNum = int.tryParse(totalFloors);
+        if (floorNum == null || totalNum == null || floorNum < 1 || floorNum > totalNum) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Этаж должен быть от 1 до этажности дома')),
+          );
+          return;
+        }
+      }
+      if (yearBuilt.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Введите год постройки')),
+        );
+        return;
+      }
+      final year = int.tryParse(yearBuilt);
+      final currentYear = DateTime.now().year;
+      if (year == null || year < 1800 || year > currentYear) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Год постройки должен быть от 1800 до $currentYear')),
+        );
+        return;
+      }
+      if (condition.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Выберите состояние объекта')),
+        );
+        return;
+      }
     }
 
     if (_currentStep < 6) {
@@ -73,6 +136,25 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => WizardResultScreen(data: _data)),
     );
+  }
+
+  void _reset() {
+    _data.updateAll((key, value) {
+      if (key == 'propertyType') return 0;
+      if (key == 'address') return '';
+      if (key == 'area') return '';
+      if (key == 'rooms') return '';
+      if (key == 'floor') return '';
+      if (key == 'totalFloors') return '';
+      if (key == 'condition') return 'Косметический ремонт';
+      if (key == 'yearBuilt') return '';
+      if (key == 'photos') return <String>[];
+      if (key == 'purpose') return 'Для продажи';
+      return value;
+    });
+    _currentStep = 0;
+    _pageController.jumpToPage(0);
+    setState(() {});
   }
 
   @override
@@ -173,7 +255,7 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
                 _Step4Photos(data: _data),
                 _Step5Documents(data: _data),
                 _Step6Purpose(data: _data),
-                _Step7Result(data: _data),
+                _Step7Result(data: _data, onReset: _reset),
               ],
             ),
           ),
@@ -812,14 +894,20 @@ class _Step6PurposeState extends State<_Step6Purpose> {
   }
 }
 
-class _Step7Result extends StatelessWidget {
+class _Step7Result extends StatefulWidget {
   final Map<String, dynamic> data;
-  const _Step7Result({required this.data});
+  final VoidCallback onReset;
+  const _Step7Result({required this.data, required this.onReset});
 
+  @override
+  State<_Step7Result> createState() => _Step7ResultState();
+}
+
+class _Step7ResultState extends State<_Step7Result> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    final propertyType = (data['propertyType'] as int?) ?? 0;
+    final propertyType = (widget.data['propertyType'] as int?) ?? 0;
     final types = ['Квартира', 'Дом', 'Земля', 'Авто', 'Коммерция', 'Другое'];
     final typeName = types[propertyType.clamp(0, types.length - 1)];
 
@@ -862,12 +950,18 @@ class _Step7Result extends StatelessWidget {
               children: [
                 _summaryRow(context, 'Объект', typeName),
                 const SizedBox(height: 12),
-                if ((data['address'] as String).isNotEmpty)
-                  _summaryRow(context, 'Адрес', data['address'] as String),
-                if ((data['area'] as String).isNotEmpty)
-                  _summaryRow(context, 'Площадь', '${data['area']} м²'),
-                if (data['purpose'] != null)
-                  _summaryRow(context, 'Цель', data['purpose'] as String),
+                if ((widget.data['address'] as String).isNotEmpty)
+                  _summaryRow(context, 'Адрес', widget.data['address'] as String),
+                if ((widget.data['area'] as String).isNotEmpty)
+                  _summaryRow(context, 'Площадь', '${widget.data['area']} м²'),
+                if ((widget.data['rooms'] as String?)?.isNotEmpty == true)
+                  _summaryRow(context, 'Комнаты', widget.data['rooms'] as String),
+                if ((widget.data['purpose'] as String?)?.isNotEmpty == true)
+                  _summaryRow(context, 'Цель', widget.data['purpose'] as String),
+                if ((widget.data['condition'] as String?)?.isNotEmpty == true)
+                  _summaryRow(context, 'Состояние', widget.data['condition'] as String),
+                if ((widget.data['yearBuilt'] as String?)?.isNotEmpty == true)
+                  _summaryRow(context, 'Год постройки', widget.data['yearBuilt'] as String),
               ],
             ),
           ),
@@ -876,7 +970,7 @@ class _Step7Result extends StatelessWidget {
             onPressed: () {
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
-                  builder: (_) => WizardResultScreen(data: data),
+                  builder: (_) => WizardResultScreen(data: widget.data),
                 ),
               );
             },
@@ -885,6 +979,18 @@ class _Step7Result extends StatelessWidget {
             style: FilledButton.styleFrom(
               backgroundColor: c.accent,
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: widget.onReset,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Начать заново'),
+            style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
