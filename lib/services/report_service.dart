@@ -2139,6 +2139,77 @@ class ReportService {
       pdfUrl: pdfUrl,
     );
   }
+
+  // ============================================
+  // GENERATE REPORT FROM MAP (wizard flow data)
+  // ============================================
+
+  /// Генерация PDF-отчёта из данных wizard-flow (Map<String, dynamic>).
+  /// Конвертирует собранные по шагам данные в ReportData, вызывает AI для
+  /// генерации содержимого, затем строит PDF и возвращает байты.
+  static Future<Uint8List> generateReport(Map<String, dynamic> data) async {
+    // Преобразование wizard-данных в ReportData
+    final propertyTypeIndex = (data['propertyType'] as int?) ?? 0;
+    final propertyTypeNames = const [
+      'Квартира',
+      'Дом',
+      'Земля',
+      'Авто',
+      'Коммерция',
+      'Другое',
+    ];
+    final propertyTypeName =
+        propertyTypeNames[propertyTypeIndex.clamp(0, propertyTypeNames.length - 1)];
+
+    final area = double.tryParse(data['area'] as String? ?? '') ?? 0.0;
+    final rooms = int.tryParse(data['rooms'] as String? ?? '') ?? 0;
+    final floor = int.tryParse(data['floor'] as String? ?? '') ?? 0;
+    final totalFloors = int.tryParse(data['totalFloors'] as String? ?? '') ?? 0;
+    final yearBuilt = int.tryParse(data['yearBuilt'] as String? ?? '') ?? 0;
+
+    // Сборка ReportData для передачи в generatePdf
+    final reportData = ReportData(
+      propertyType: propertyTypeName,
+      address: (data['address'] as String?) ?? '',
+      area: area,
+      rooms: rooms,
+      floor: floor,
+      totalFloors: totalFloors,
+      condition: (data['condition'] as String?) ?? 'Нет данных',
+      yearBuilt: yearBuilt,
+      purpose: (data['purpose'] as String?) ?? 'Не указана',
+      clientName: (data['clientName'] as String?) ?? '',
+      clientIin: (data['clientIin'] as String?) ?? '',
+      clientAddress: (data['clientAddress'] as String?) ?? '',
+      clientIsOrg: false,
+      photoUrls: (data['photos'] as List<String>?) ?? [],
+      estimatedPrice: 0.0,
+      priceRangeLow: 0.0,
+      priceRangeHigh: 0.0,
+      pricePerMeter: 0.0,
+      confidence: 0.0,
+      comparables: const [],
+      recommendations: const [],
+      appraisalDate: DateTime.now().toIso8601String(),
+      reportNumber: 'G-${DateTime.now().year}-0001',
+      appraiserName: '',
+      appraiserIin: '',
+      appraiserCertificate: '',
+      appraiserPalata: '',
+      appraiserInsurance: '',
+      legalEntityName: 'ТОО «GaMa Group»',
+      legalEntityAddress: 'г. Алматы, Алмалинский район, ул. Жамбыла, д. 114/85, оф. 133',
+      legalEntityBin: '160840018855',
+      legalEntityIik: 'KZ646017131000019202',
+      legalEntityBik: 'HSBKKZKX',
+      legalEntityBank: 'Народный банк РК',
+      legalEntityKbe: '17',
+      legalEntityPhone: '+7(727)327-27-73',
+    );
+
+    // Генерация PDF
+    return generatePdf(reportData);
+  }
 }
 
 /// Информация об ЭЦП-подписи для встраивания в PDF — используется

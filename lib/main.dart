@@ -5,7 +5,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
-import 'screens/app_shell.dart';
 import 'screens/appraiser_dashboard.dart';
 import 'screens/admin_dashboard.dart';
 import 'screens/onboarding_screen.dart';

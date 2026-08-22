@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import 'wizard_result_screen.dart';
 
 /// Wizard: пошаговый поток оценки имущества.
 class WizardFlowScreen extends StatefulWidget {
@@ -798,7 +799,7 @@ class _Step7Result extends StatelessWidget {
     final c = AppColors.of(context);
     final propertyType = (data['propertyType'] as int?) ?? 0;
     final types = ['Квартира', 'Дом', 'Земля', 'Авто', 'Коммерция', 'Другое'];
-    final typeName = types[propertyType] ?? 'Недвижимость';
+    final typeName = types[propertyType.clamp(0, types.length - 1)];
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -849,18 +850,16 @@ class _Step7Result extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-          const Spacer(),
           FilledButton.icon(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Подготовка отчёта — в разработке'),
-                  duration: Duration(seconds: 2),
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => WizardResultScreen(data: data),
                 ),
               );
             },
             icon: const Icon(Icons.description_rounded),
-            label: const Text('Подготовить отчёт'),
+            label: const Text('Перейти к отчёту'),
             style: FilledButton.styleFrom(
               backgroundColor: c.accent,
               foregroundColor: Colors.white,
@@ -899,61 +898,6 @@ class _Step7Result extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class WizardResultScreen extends StatelessWidget {
-  final Map<String, dynamic> data;
-  const WizardResultScreen({super.key, required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    return Scaffold(
-      backgroundColor: c.background,
-      appBar: AppBar(
-        title: const Text('Результат'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.check_circle_rounded, size: 72, color: Colors.green),
-            const SizedBox(height: 16),
-            Text(
-              'Отчёт готов',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: c.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Официальный отчёт с ЭЦП подписью',
-              style: TextStyle(fontSize: 15, color: c.textSecondary),
-            ),
-            const SizedBox(height: 32),
-            FilledButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Скачивание PDF — в разработке'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.download_rounded),
-              label: const Text('Скачать PDF'),
-            ),
-          ],
-        ),
       ),
     );
   }
