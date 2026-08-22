@@ -32,25 +32,10 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy build/web --project-name esep-wizard
 
-      - name: Sync secrets to Pages Function
+      - name: Notify on deploy
+        if: always()
         run: |
-          # Каждый секрет опционален: если GitHub-секрет задан — кладём в CF,
-          # иначе пропускаем (можно добавить вручную в dashboard).
-          for pair in \
-            "OPENROUTER_API_KEY:${{ secrets.OPENROUTER_API_KEY }}" \
-            "SUPABASE_URL:${{ secrets.SUPABASE_URL }}" \
-            "SUPABASE_ANON_KEY:${{ secrets.SUPABASE_ANON_KEY }}" \
-            "SUPABASE_SERVICE_ROLE_KEY:${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-            "GEMINI_API_KEY:${{ secrets.GEMINI_API_KEY }}" \
-            "KASPI_SECRET_KEY:${{ secrets.KASPI_SECRET_KEY }}"
-          do
-            name="${pair%%:*}"; val="${pair#*:}"
-            if [ -n "$val" ]; then
-              echo "$val" | npx wrangler pages secret put "$name" --project-name esep-wizard
-            else
-              echo "No $name GitHub secret — skipping (dashboard secret covers it)"
-            fi
-          done
+          echo "Deploy finished with status: ${{ job.status }}"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
