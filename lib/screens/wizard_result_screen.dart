@@ -27,17 +27,19 @@ class _WizardResultScreenState extends State<WizardResultScreen> {
       final data = widget.data;
       final pdfBytes = await ReportService.generateReport(data);
       if (!mounted) return;
-      final dir = await getApplicationDocumentsDirectory();
+      Directory? dir;
+      try {
+        dir = await getApplicationDocumentsDirectory();
+      } catch (_) {
+        dir = Directory.current;
+      }
       final safeTs = DateTime.now().toIso8601String().replaceAll(':', '-');
       final fileName = 'ESEP_отчёт_$safeTs.pdf';
       final file = File('${dir.path}/$fileName');
       await file.writeAsBytes(pdfBytes);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('PDF сохранён: ${file.path} (${pdfBytes.length} байт)'),
-          duration: const Duration(seconds: 5),
-        ),
+        SnackBar(content: Text('PDF сохранён: ${file.path}')),
       );
       if (kIsWeb) {
         await Printing.layoutPdf(
