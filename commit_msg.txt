@@ -1,0 +1,9 @@
+feat: wizard-first navigation for new users
+
+- WizardHomeScreen: приветствие «Добро пожаловать в ESEP» + кнопка «Начать оценку»
+- WizardFlowScreen: 7-шаговый wizard (тип → адрес → характеристики → фото → документы → цель → результат)
+- Menu (три точки): Заявки, ИИ-чат, Документы, Профиль, Настройки
+- main.dart: для клиентов после онбординга WizardHomeScreen вместо AppShell
+- Оставшиеся роли (admin, appraiser) — без изменений
+
+0 ошибок dart analyze (2 предупреждения о dead code в WizardResultScreen).
