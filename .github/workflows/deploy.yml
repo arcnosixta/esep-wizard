@@ -30,7 +30,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy build/web --project-name esep
+          command: pages deploy build/web --project-name esep-wizard
 
       - name: Sync secrets to Pages Function
         run: |
@@ -46,7 +46,7 @@ jobs:
           do
             name="${pair%%:*}"; val="${pair#*:}"
             if [ -n "$val" ]; then
-              echo "$val" | npx wrangler pages secret put "$name" --project-name esep
+              echo "$val" | npx wrangler pages secret put "$name" --project-name esep-wizard
             else
               echo "No $name GitHub secret — skipping (dashboard secret covers it)"
             fi
