@@ -17,7 +17,7 @@ import 'services/supabase_service.dart';
 
 const supabaseUrl = 'https://rphsqxhwfrkavvxzvnuv.supabase.co';
 const supabaseAnonKey =
-    'eyJhbG...h_TU';
+    'sb_publishable_AlT3qwH74CDE8BBnU3zCOA_5NcejDZ1';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
