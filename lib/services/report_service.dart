@@ -167,14 +167,19 @@ class ReportService {
   }) async {
     final pdf = pw.Document();
 
+    // Шрифты: DejaVuSans поддерживает кириллицу; размеры и межстрочный — по ГОСТ/МСО
     final fontData = await rootBundle.load('assets/fonts/DejaVuSans.ttf');
     final fontBoldData = await rootBundle.load('assets/fonts/DejaVuSans-Bold.ttf');
     final font = pw.Font.ttf(fontData);
     final fontBold = pw.Font.ttf(fontBoldData);
 
+    // Поля страницы по ГОСТ 7.32-2017 / требования МСО:
+    // левое 30 мм (~85 pt), правое 15 мм (~42.5 pt), верх/низ 20 мм (~56.7 pt)
+    const pageMargin = pw.EdgeInsets.fromLTRB(85, 56.7, 42.5, 56.7);
+
     pw.MultiPage page(List<pw.Widget> children) => pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.all(40),
+          margin: pageMargin,
           header: (context) => _buildHeader(data, font, fontBold),
           footer: (context) => _buildFooter(context, data, font, fontBold),
           build: (context) => children,

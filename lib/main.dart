@@ -9,6 +9,7 @@ import 'screens/app_shell.dart';
 import 'screens/appraiser_dashboard.dart';
 import 'screens/admin_dashboard.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/wizard_home_screen.dart';
 import 'providers/app_settings.dart';
 import 'l10n/app_strings.dart';
 import 'models/user_profile.dart';
@@ -16,7 +17,7 @@ import 'services/supabase_service.dart';
 
 const supabaseUrl = 'https://rphsqxhwfrkavvxzvnuv.supabase.co';
 const supabaseAnonKey =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwaHNxeGh3ZnJrYXZ2eHp2bnV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0NTQ4ODcsImV4cCI6MjEwMDAzMDg4N30.dFa8Py2xK0Jw7OSCJSRlPwAgwRGlTYzq8JfSBUkh_TU';
+    'eyJhbG...h_TU';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,7 +54,7 @@ class EsepApp extends StatelessWidget {
       listenable: appSettings,
       builder: (context, _) {
         return MaterialApp(
-          title: 'ESEP',
+          title: 'ESEP Wizard',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
@@ -72,7 +73,7 @@ class EsepApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: AuthGate(),
+          home: const AuthGate(),
         );
       },
     );
@@ -133,18 +134,16 @@ class _AuthGateState extends State<AuthGate> {
         return const AppraiserDashboard();
       case UserRole.client:
       case null:
-        // Новым пользователям показываем интерактивную инструкцию.
+        // Wizard: новому пользователю — приветствие + «Начать»
         if (!appSettings.onboardingDoneFor(userId)) {
           return OnboardingScreen(
             onDone: () => appSettings.completeOnboarding(userId),
             onSkip: () => appSettings.completeOnboarding(userId, withTour: false),
           );
         }
-        // После онбординга — короткая экскурсия по главному экрану.
-        return AppShell(
-          userId: userId,
-          startTour: appSettings.tourPendingFor(userId),
-        );
+        // После онбординга — wizard home, а не AppShell
+        // При нажатии на Menu (три точки) открывается AppShell или отдельные экраны
+        return const WizardHomeScreen();
     }
   }
 
