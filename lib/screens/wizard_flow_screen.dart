@@ -6,7 +6,6 @@ import '../utils/constants.dart';
 import '../navigation/app_navigator.dart';
 import 'case_detail_screen.dart';
 import '../theme/app_colors.dart';
-import 'wizard_result_screen.dart';
 
 /// Wizard: пошаговый поток оценки имущества.
 class WizardFlowScreen extends StatefulWidget {
@@ -32,8 +31,8 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
     'condition': 'Косметический ремонт',
     'yearBuilt': '',
     'photos': <String>[],
-    'documents': <String>[],
     'purpose': 'Для продажи',
+    'documents': <String>[],
     'applicationId': null,
   };
 
@@ -45,7 +44,6 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
 
   Future<void> _next() async {
     if (_currentStep == 1 && (_data['address'] as String).trim().isEmpty) {
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Введите адрес объекта')),
       );
@@ -60,21 +58,18 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
       final condition = (_data['condition'] as String?)?.trim() ?? '';
       final propertyType = (_data['propertyType'] as int?) ?? 0;
       if (area.isEmpty) {
-        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Введите площадь')),
         );
         return;
       }
       if (double.tryParse(area.replaceAll(',', '.')) == null || double.parse(area.replaceAll(',', '.')) <= 0) {
-        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Площадь должна быть числом больше 0')),
         );
         return;
       }
       if ((propertyType == 0 || propertyType == 1) && rooms.isEmpty) {
-        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Введите количество комнат')),
         );
@@ -82,14 +77,12 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
       }
       if (propertyType == 0) {
         if (floor.isEmpty) {
-          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Введите этаж')),
           );
           return;
         }
         if (totalFloors.isEmpty) {
-          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Введите этажность дома')),
           );
@@ -98,7 +91,6 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
         final floorNum = int.tryParse(floor);
         final totalNum = int.tryParse(totalFloors);
         if (floorNum == null || totalNum == null || floorNum < 1 || floorNum > totalNum) {
-          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Этаж должен быть от 1 до этажности дома')),
           );
@@ -106,7 +98,6 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
         }
       }
       if (yearBuilt.isEmpty) {
-        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Введите год постройки')),
         );
@@ -115,14 +106,12 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
       final year = int.tryParse(yearBuilt);
       final currentYear = DateTime.now().year;
       if (year == null || year < 1800 || year > currentYear) {
-        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Год постройки должен быть от 1800 до $currentYear')),
         );
         return;
       }
       if (condition.isEmpty) {
-        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Выберите состояние объекта')),
         );
@@ -170,9 +159,7 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
       );
       _data['applicationId'] = app['id'] as String;
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => WizardResultScreen(data: _data)),
-      );
+      AppNavigator.push(context, CaseDetailScreen(application: app));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -181,25 +168,6 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  void _reset() {
-    _data.updateAll((key, value) {
-      if (key == 'propertyType') return 0;
-      if (key == 'address') return '';
-      if (key == 'area') return '';
-      if (key == 'rooms') return '';
-      if (key == 'floor') return '';
-      if (key == 'totalFloors') return '';
-      if (key == 'condition') return 'Косметический ремонт';
-      if (key == 'yearBuilt') return '';
-      if (key == 'photos') return <String>[];
-      if (key == 'purpose') return 'Для продажи';
-      return value;
-    });
-    _currentStep = 0;
-    _pageController.jumpToPage(0);
-    setState(() {});
   }
 
   @override
@@ -995,28 +963,18 @@ class _Step6PurposeState extends State<_Step6Purpose> {
   }
 }
 
-class _Step7Result extends StatefulWidget {
+class _Step7Result extends StatelessWidget {
   final Map<String, dynamic> data;
-<<<<<<< HEAD
-  final VoidCallback onReset;
-  const _Step7Result({required this.data, required this.onReset});
-=======
   final Future<void> Function() onSubmit;
   final bool submitting;
   const _Step7Result({required this.data, required this.onSubmit, this.submitting = false});
->>>>>>> cf34429 (feat: синхронизация с esep-web + wizard готов к Supabase/payment/PDF)
 
-  @override
-  State<_Step7Result> createState() => _Step7ResultState();
-}
-
-class _Step7ResultState extends State<_Step7Result> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
-    final propertyType = (widget.data['propertyType'] as int?) ?? 0;
+    final propertyType = (data['propertyType'] as int?) ?? 0;
     final types = ['Квартира', 'Дом', 'Земля', 'Авто', 'Коммерция', 'Другое'];
-    final typeName = types[propertyType.clamp(0, types.length - 1)];
+    final typeName = types[propertyType];
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -1057,18 +1015,18 @@ class _Step7ResultState extends State<_Step7Result> {
               children: [
                 _summaryRow(context, 'Объект', typeName),
                 const SizedBox(height: 12),
-                if ((widget.data['address'] as String).isNotEmpty)
-                  _summaryRow(context, 'Адрес', widget.data['address'] as String),
-                if ((widget.data['area'] as String).isNotEmpty)
-                  _summaryRow(context, 'Площадь', '${widget.data['area']} м²'),
-                if ((widget.data['rooms'] as String?)?.isNotEmpty == true)
-                  _summaryRow(context, 'Комнаты', widget.data['rooms'] as String),
-                if ((widget.data['purpose'] as String?)?.isNotEmpty == true)
-                  _summaryRow(context, 'Цель', widget.data['purpose'] as String),
-                if ((widget.data['condition'] as String?)?.isNotEmpty == true)
-                  _summaryRow(context, 'Состояние', widget.data['condition'] as String),
-                if ((widget.data['yearBuilt'] as String?)?.isNotEmpty == true)
-                  _summaryRow(context, 'Год постройки', widget.data['yearBuilt'] as String),
+                if ((data['address'] as String).isNotEmpty)
+                  _summaryRow(context, 'Адрес', data['address'] as String),
+                if ((data['area'] as String).isNotEmpty)
+                  _summaryRow(context, 'Площадь', '${data['area']} м²'),
+                if ((data['rooms'] as String?)?.isNotEmpty == true)
+                  _summaryRow(context, 'Комнаты', data['rooms'] as String),
+                if ((data['purpose'] as String?)?.isNotEmpty == true)
+                  _summaryRow(context, 'Цель', data['purpose'] as String),
+                if ((data['condition'] as String?)?.isNotEmpty == true)
+                  _summaryRow(context, 'Состояние', data['condition'] as String),
+                if ((data['yearBuilt'] as String?)?.isNotEmpty == true)
+                  _summaryRow(context, 'Год постройки', data['yearBuilt'] as String),
               ],
             ),
           ),
@@ -1083,18 +1041,6 @@ class _Step7ResultState extends State<_Step7Result> {
             style: FilledButton.styleFrom(
               backgroundColor: c.accent,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: widget.onReset,
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Начать заново'),
-            style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -1134,61 +1080,3 @@ class _Step7ResultState extends State<_Step7Result> {
     );
   }
 }
-
-
-class WizardResultScreen extends StatelessWidget {
-  final Map<String, dynamic> data;
-  const WizardResultScreen({super.key, required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    final appId = data['applicationId'] as String?;
-    return Scaffold(
-      backgroundColor: c.background,
-      appBar: AppBar(
-        title: const Text('Результат'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.check_circle_rounded, size: 72, color: appId == null ? c.error : Colors.green),
-            const SizedBox(height: 16),
-            Text(
-              appId == null ? 'Заявка не создана' : 'Заявка создана',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: c.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              appId == null ? 'Создайте заявку из последнего шага' : 'Откройте заявку, чтобы продолжить',
-              style: TextStyle(fontSize: 15, color: c.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            if (appId != null)
-              FilledButton.icon(
-                onPressed: () {
-                  AppNavigator.push(
-                    context,
-                    CaseDetailScreen(application: {'id': appId}),
-                  );
-                },
-                icon: const Icon(Icons.folder_open_rounded),
-                label: const Text('Открыть заявку'),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
