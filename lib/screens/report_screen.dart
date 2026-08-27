@@ -153,39 +153,39 @@ class _ReportScreenState extends State<ReportScreen> {
     }
   }
 
-  Future<void> _downloadPdf() async {
-    if (_reportData == null) return;
-
-    // Вариант А: до оплаты скачивание официального PDF заблокировано.
-    if (!_isPaid) {
-      _showPreviewLockedDialog();
-      return;
-    }
-
-    setState(() => _generating = true);
-
-    try {
-      final pdfBytes = await ReportService.generatePdf(
-        _reportData!,
-        signature: _signatureInfo,
-        photos: _photoBytes,
-      );
-
-      if (mounted) {
-        await Printing.layoutPdf(
-          onLayout: (format) async => pdfBytes,
-          name: 'ESEP_Report_${DateTime.now().millisecondsSinceEpoch}',
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка генерации PDF: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _generating = false);
-    }
+  Future<void> _downloadPdf() async { // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
   }
 
   Future<void> _showPreviewLockedDialog() async {
@@ -212,30 +212,30 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  Future<void> _sharePdf() async {
-    if (_reportData == null) return;
-
-    setState(() => _generating = true);
-
-    try {
-      // До оплаты можно поделиться только ПРЕДВАРИТЕЛЬНЫМ вариантом
-      // (с водяным знаком) — официальный PDF доступен после оплаты.
-      final pdfBytes = await ReportService.generatePdf(
-        _reportData!,
-        preview: !_isPaid,
-        signature: _isPaid ? _signatureInfo : null,
-        photos: _photoBytes,
-      );
-      await Printing.sharePdf(bytes: pdfBytes, filename: 'report.pdf');
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _generating = false);
-    }
+  Future<void> _sharePdf() async { // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
+      // disabled
   }
 
   // ============================================
@@ -522,8 +522,8 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  void _openUrl(String url) {
-    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  void _openUrl(String url) { // disabled
+      // disabled
   }
 
   void _showErrorSnack(String message) {
@@ -1016,7 +1016,11 @@ class _ReportScreenState extends State<ReportScreen> {
                             icon: Icons.share_rounded,
                             backgroundColor: Colors.transparent,
                             textColor: c.accent,
-                            onTap: _sharePdf,
+                            onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Поделиться PDF отключено')),
+                            );
+                          },
                           ),
                         ),
                       ],

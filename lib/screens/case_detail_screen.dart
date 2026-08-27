@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_colors.dart';
+import '../services/report_service.dart';
+import '../widgets/assistant_tab_bar.dart';
 import '../utils/formatters.dart';
 import '../widgets/information_tile.dart';
 import '../widgets/option_button.dart';
@@ -69,23 +70,10 @@ class CaseDetailScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
                 child: Row(
                   children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 20,
-                        color: c.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        caseNumber(id),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: c.textPrimary,
-                        ),
+                      child: AssistantTabBar(
+                        activeTab: AssistantTab.wizard,
+                        onTabChanged: (_) {},
                       ),
                     ),
                     StatusBadge(
@@ -316,7 +304,7 @@ class CaseDetailScreen extends StatelessWidget {
                           final c = AppColors.of(context);
                           final messenger = ScaffoldMessenger.of(context);
                           final report = await SupabaseService.getReportForApplication(id);
-                          final data = await SupabaseService.generateReportData(
+                          final data = await ReportService.generateReportData(
                             propertyType: prop['type'] ?? 'apartment',
                             address: address,
                             area: area,

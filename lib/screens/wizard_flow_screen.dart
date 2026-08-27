@@ -6,6 +6,7 @@ import '../utils/constants.dart';
 import '../navigation/app_navigator.dart';
 import 'case_detail_screen.dart';
 import '../theme/app_colors.dart';
+import '../widgets/assistant_tab_bar.dart';
 
 /// Wizard: пошаговый поток оценки имущества.
 class WizardFlowScreen extends StatefulWidget {
@@ -185,13 +186,9 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
 
     return Scaffold(
       backgroundColor: c.background,
-      appBar: AppBar(
-        title: Text('Шаг ${_currentStep + 1} из 7'),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(44),
+        child: AssistantTabBar(activeTab: AssistantTab.wizard, onTabChanged: (_) {}),
       ),
       body: Column(
         children: [

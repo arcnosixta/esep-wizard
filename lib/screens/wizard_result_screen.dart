@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:printing/printing.dart';
 import '../theme/app_colors.dart';
 import '../../services/report_service.dart';
 
@@ -21,40 +18,7 @@ class _WizardResultScreenState extends State<WizardResultScreen> {
   bool _generating = false;
 
   Future<void> _generatePdf() async {
-    if (_generating) return;
-    setState(() => _generating = true);
-    try {
-      final data = widget.data;
-      final pdfBytes = await ReportService.generateReport(data);
-      if (!mounted) return;
-      Directory? dir;
-      try {
-        dir = await getApplicationDocumentsDirectory();
-      } catch (_) {
-        dir = Directory.current;
-      }
-      final safeTs = DateTime.now().toIso8601String().replaceAll(':', '-');
-      final fileName = 'ESEP_отчёт_$safeTs.pdf';
-      final file = File('${dir.path}/$fileName');
-      await file.writeAsBytes(pdfBytes);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('PDF сохранён: ${file.path}')),
-      );
-      if (kIsWeb) {
-        await Printing.layoutPdf(
-          onLayout: (_) async => pdfBytes,
-          name: fileName,
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка генерации: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _generating = false);
-    }
+    // PDF generation disabled
   }
 
   @override
@@ -109,9 +73,9 @@ class _WizardResultScreenState extends State<WizardResultScreen> {
               const CircularProgressIndicator()
             else
               FilledButton.icon(
-                onPressed: _generatePdf,
-                icon: const Icon(Icons.download_rounded),
-                label: const Text('Скачать PDF'),
+                onPressed: null,
+                icon: const Icon(Icons.lock_rounded),
+                label: const Text('Скачивание PDF отключено'),
               ),
           ],
         ),
