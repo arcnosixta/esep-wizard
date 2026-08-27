@@ -10,6 +10,7 @@ import '../theme/app_colors.dart';
 import '../utils/whatsapp.dart';
 import '../widgets/option_button.dart';
 import 'new_application_screen.dart';
+import 'xpayment_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
   /// Если не передан — берётся последняя заявка пользователя.
@@ -470,6 +471,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     subtitle: 'Автоподтверждение — без ожидания менеджера',
                     color: const Color(0xFFE8394A),
                   ),
+                  Container(
+                    height: 1,
+                    margin: const EdgeInsets.only(left: 56),
+                    color: c.divider,
+                  ),
+                  _paymentRow(
+                    context: context,
+                    index: 3,
+                    icon: Icons.payment_rounded,
+                    label: 'XPayment',
+                    subtitle: 'Онлайн-оплата через XPayment',
+                    color: c.accent,
+                  ),
                 ],
               ),
             ),
@@ -480,9 +494,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ] else if (_selectedMethod == 1) ...[
               const SizedBox(height: 14),
               _kaspiBlock(c),
-            ] else ...[
+            ] else if (_selectedMethod == 2) ...[
               const SizedBox(height: 14),
               _kaspiOnlineBlock(c),
+            ] else ...[
+              const SizedBox(height: 14),
+              _xpaymentBlock(c),
             ],
           ],
         ),
@@ -593,6 +610,54 @@ class _PaymentScreenState extends State<PaymentScreen> {
             icon: Icons.bolt_rounded,
             backgroundColor: const Color(0xFFE8394A),
             onTap: _submitting ? null : () => _submitKaspiOnline(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _xpaymentBlock(AppColors c) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.border, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.payment_rounded, size: 20, color: c.accent),
+              const SizedBox(width: 10),
+              Text(
+                'XPayment — онлайн',
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: c.textPrimary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Оплата через Kaspi Pay по платёжной ссылке XPayment '
+            'с автоматическим подтверждением: после оплаты заявка сразу '
+            'перейдёт в статус «Оплачена», ждать менеджера не нужно.',
+            style: TextStyle(fontSize: 13, color: c.textSecondary, height: 1.4),
+          ),
+          const SizedBox(height: 16),
+          OptionButton(
+            text: 'Оплатить через XPayment',
+            icon: Icons.payment_rounded,
+            backgroundColor: c.accent,
+            onTap: _appId.isEmpty
+                ? null
+                : () => AppNavigator.push(
+                      context,
+                      XPaymentScreen(applicationId: _appId),
+                    ),
           ),
         ],
       ),
@@ -814,7 +879,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   // ── Нижняя кнопка (если метод не выбран — не показываем) ───────
   Widget _submitSection(AppColors c) {
-    if (_isPaid) return const SliverToBoxAdapter(child: SizedBox.shrink());
+    if (_isPaid || _selectedMethod == 3) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),

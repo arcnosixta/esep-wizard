@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+import '../services/supabase_service.dart';
+import '../utils/constants.dart';
+import '../navigation/app_navigator.dart';
+import 'case_detail_screen.dart';
 import '../theme/app_colors.dart';
 import 'wizard_result_screen.dart';
 
@@ -13,6 +19,7 @@ class WizardFlowScreen extends StatefulWidget {
 class _WizardFlowScreenState extends State<WizardFlowScreen> {
   final _pageController = PageController();
   int _currentStep = 0;
+  bool _loading = false;
 
   /// Данные, собранные по шагам.
   final _data = <String, dynamic>{
@@ -25,7 +32,9 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
     'condition': 'Косметический ремонт',
     'yearBuilt': '',
     'photos': <String>[],
+    'documents': <String>[],
     'purpose': 'Для продажи',
+    'applicationId': null,
   };
 
   @override
@@ -34,8 +43,9 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
     super.dispose();
   }
 
-  void _next() {
+  Future<void> _next() async {
     if (_currentStep == 1 && (_data['address'] as String).trim().isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Введите адрес объекта')),
       );
@@ -50,18 +60,21 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
       final condition = (_data['condition'] as String?)?.trim() ?? '';
       final propertyType = (_data['propertyType'] as int?) ?? 0;
       if (area.isEmpty) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Введите площадь')),
         );
         return;
       }
       if (double.tryParse(area.replaceAll(',', '.')) == null || double.parse(area.replaceAll(',', '.')) <= 0) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Площадь должна быть числом больше 0')),
         );
         return;
       }
       if ((propertyType == 0 || propertyType == 1) && rooms.isEmpty) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Введите количество комнат')),
         );
@@ -69,12 +82,14 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
       }
       if (propertyType == 0) {
         if (floor.isEmpty) {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Введите этаж')),
           );
           return;
         }
         if (totalFloors.isEmpty) {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Введите этажность дома')),
           );
@@ -83,6 +98,7 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
         final floorNum = int.tryParse(floor);
         final totalNum = int.tryParse(totalFloors);
         if (floorNum == null || totalNum == null || floorNum < 1 || floorNum > totalNum) {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Этаж должен быть от 1 до этажности дома')),
           );
@@ -90,6 +106,7 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
         }
       }
       if (yearBuilt.isEmpty) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Введите год постройки')),
         );
@@ -98,12 +115,14 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
       final year = int.tryParse(yearBuilt);
       final currentYear = DateTime.now().year;
       if (year == null || year < 1800 || year > currentYear) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Год постройки должен быть от 1800 до $currentYear')),
         );
         return;
       }
       if (condition.isEmpty) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Выберите состояние объекта')),
         );
@@ -118,7 +137,7 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
         curve: Curves.easeOutCubic,
       );
     } else {
-      _showResult();
+      await _submitWizard();
     }
   }
 
@@ -132,10 +151,36 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
     }
   }
 
-  void _showResult() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => WizardResultScreen(data: _data)),
-    );
+  Future<void> _submitWizard() async {
+    setState(() => _loading = true);
+    try {
+      final property = await SupabaseService.addProperty(
+        type: PropertyType.values[(_data['propertyType'] as int?) ?? 0].name,
+        address: (_data['address'] as String?) ?? '',
+        area: double.tryParse((_data['area'] as String?) ?? '') ?? 0,
+        rooms: int.tryParse((_data['rooms'] as String?) ?? ''),
+        floor: int.tryParse((_data['floor'] as String?) ?? ''),
+        totalFloors: int.tryParse((_data['totalFloors'] as String?) ?? ''),
+        condition: (_data['condition'] as String?) ?? 'Косметический ремонт',
+      );
+      final app = await SupabaseService.createApplication(
+        propertyId: property['id'] as String,
+        source: 'wizard',
+        estimatedPrice: null,
+      );
+      _data['applicationId'] = app['id'] as String;
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => WizardResultScreen(data: _data)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка создания заявки: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   void _reset() {
@@ -255,7 +300,7 @@ class _WizardFlowScreenState extends State<WizardFlowScreen> {
                 _Step4Photos(data: _data),
                 _Step5Documents(data: _data),
                 _Step6Purpose(data: _data),
-                _Step7Result(data: _data, onReset: _reset),
+                _Step7Result(data: _data, onSubmit: _submitWizard, submitting: _loading),
               ],
             ),
           ),
@@ -659,13 +704,19 @@ class _Step3CharacteristicsState extends State<_Step3Characteristics> {
   }
 }
 
-class _Step4Photos extends StatelessWidget {
+class _Step4Photos extends StatefulWidget {
   final Map<String, dynamic> data;
   const _Step4Photos({required this.data});
 
   @override
+  State<_Step4Photos> createState() => _Step4PhotosState();
+}
+
+class _Step4PhotosState extends State<_Step4Photos> {
+  @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final photos = widget.data['photos'] as List<dynamic>? ?? const <String>[];
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -698,12 +749,12 @@ class _Step4Photos extends StatelessWidget {
               color: c.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: c.border, width: 1.5),
-              image: data['photos'].isNotEmpty
+              image: photos.isNotEmpty
                   ? DecorationImage(
-                      image: NetworkImage(data['photos'][0]), fit: BoxFit.cover)
+                      image: NetworkImage(photos.first), fit: BoxFit.cover)
                   : null,
             ),
-            child: data['photos'].isEmpty
+            child: photos.isEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -720,9 +771,35 @@ class _Step4Photos extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Загрузка фото — в разработке')));
+            onPressed: () async {
+              try {
+                final result = await ImagePicker().pickMultiImage(
+                  maxWidth: 2048,
+                  maxHeight: 2048,
+                );
+                if (result.isEmpty) return;
+                final appId = (widget.data['applicationId'] as String?) ?? 'draft';
+                final paths = <String>[];
+                for (final x in result) {
+                  final bytes = await x.readAsBytes();
+                  final path = await SupabaseService.uploadReportPhoto(
+                    bytes: bytes,
+                    applicationId: appId,
+                    index: paths.length,
+                  );
+                  paths.add(path);
+                }
+                if (!mounted) return;
+                setState(() => widget.data['photos'] = paths);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Загружено фото: ${paths.length}')),
+                );
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Ошибка загрузки фото: $e')),
+                );
+              }
             },
             icon: const Icon(Icons.camera_alt_rounded, size: 20),
             label: const Text('Добавить фото'),
@@ -733,13 +810,19 @@ class _Step4Photos extends StatelessWidget {
   }
 }
 
-class _Step5Documents extends StatelessWidget {
+class _Step5Documents extends StatefulWidget {
   final Map<String, dynamic> data;
   const _Step5Documents({required this.data});
 
   @override
+  State<_Step5Documents> createState() => _Step5DocumentsState();
+}
+
+class _Step5DocumentsState extends State<_Step5Documents> {
+  @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final docs = widget.data['documents'] as List<dynamic>? ?? const <String>[];
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -774,22 +857,40 @@ class _Step5Documents extends StatelessWidget {
               border: Border.all(color: c.border, width: 1.5),
             ),
             child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.upload_file_rounded, size: 40, color: c.textHint),
-                  const SizedBox(height: 8),
-                  Text('Нажмите, чтобы загрузить документы',
-                      style: TextStyle(fontSize: 13, color: c.textHint)),
-                ],
+              child: Text(
+                docs.isEmpty ? 'Нажмите, чтобы загрузить документы' : 'Загружено документов: ${docs.length}',
+                style: TextStyle(fontSize: 13, color: c.textHint),
               ),
             ),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Загрузка документов — в разработке')));
+            onPressed: () async {
+              try {
+                final result = await FilePicker.platform.pickFiles(
+                  type: FileType.custom,
+                  allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+                  allowMultiple: true,
+                );
+                if (result == null || result.files.isEmpty) return;
+                final uploaded = <String>[];
+                for (final f in result.files) {
+                  final bytes = f.bytes ?? (f.path != null ? await f.xFile.readAsBytes() : null);
+                  if (bytes == null) continue;
+                  final up = await SupabaseService.uploadDocument(fileName: f.name, bytes: bytes);
+                  uploaded.add(up['id'].toString());
+                }
+                if (!mounted) return;
+                setState(() => widget.data['documents'] = uploaded);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Загружено документов: ${uploaded.length}')),
+                );
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Ошибка загрузки документов: $e')),
+                );
+              }
             },
             icon: const Icon(Icons.upload_file_rounded, size: 20),
             label: const Text('Загрузить документы'),
@@ -896,8 +997,14 @@ class _Step6PurposeState extends State<_Step6Purpose> {
 
 class _Step7Result extends StatefulWidget {
   final Map<String, dynamic> data;
+<<<<<<< HEAD
   final VoidCallback onReset;
   const _Step7Result({required this.data, required this.onReset});
+=======
+  final Future<void> Function() onSubmit;
+  final bool submitting;
+  const _Step7Result({required this.data, required this.onSubmit, this.submitting = false});
+>>>>>>> cf34429 (feat: синхронизация с esep-web + wizard готов к Supabase/payment/PDF)
 
   @override
   State<_Step7Result> createState() => _Step7ResultState();
@@ -967,12 +1074,9 @@ class _Step7ResultState extends State<_Step7Result> {
           ),
           const SizedBox(height: 32),
           FilledButton.icon(
-            onPressed: () {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) => WizardResultScreen(data: widget.data),
-                ),
-              );
+            onPressed: () async {
+              if (submitting) return;
+              await onSubmit();
             },
             icon: const Icon(Icons.description_rounded),
             label: const Text('Перейти к отчёту'),
@@ -1030,3 +1134,61 @@ class _Step7ResultState extends State<_Step7Result> {
     );
   }
 }
+
+
+class WizardResultScreen extends StatelessWidget {
+  final Map<String, dynamic> data;
+  const WizardResultScreen({super.key, required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final appId = data['applicationId'] as String?;
+    return Scaffold(
+      backgroundColor: c.background,
+      appBar: AppBar(
+        title: const Text('Результат'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.check_circle_rounded, size: 72, color: appId == null ? c.error : Colors.green),
+            const SizedBox(height: 16),
+            Text(
+              appId == null ? 'Заявка не создана' : 'Заявка создана',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: c.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              appId == null ? 'Создайте заявку из последнего шага' : 'Откройте заявку, чтобы продолжить',
+              style: TextStyle(fontSize: 15, color: c.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            if (appId != null)
+              FilledButton.icon(
+                onPressed: () {
+                  AppNavigator.push(
+                    context,
+                    CaseDetailScreen(application: {'id': appId}),
+                  );
+                },
+                icon: const Icon(Icons.folder_open_rounded),
+                label: const Text('Открыть заявку'),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
