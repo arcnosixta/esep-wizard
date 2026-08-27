@@ -3,8 +3,6 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:printing/printing.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../models/report_template.dart';
 import '../models/user_profile.dart';
 import '../services/cms_signature_parser.dart';
@@ -1006,9 +1004,9 @@ class _ReportScreenState extends State<ReportScreen> {
                       children: [
                         Expanded(
                           child: OptionButton(
-                            text: _isPaid ? 'Скачать PDF' : 'Скачать (после оплаты)',
-                            icon: Icons.download_rounded,
-                            onTap: _downloadPdf,
+                            text: 'Скачивание PDF',
+                            icon: Icons.lock_rounded,
+                            onTap: null,
                           ),
                         ),
                         const SizedBox(width: 12),

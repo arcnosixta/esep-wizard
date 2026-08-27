@@ -33,39 +33,6 @@ class CaseDetailScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _downloadReport(BuildContext context, String applicationId) async {
-    final c = AppColors.of(context);
-    final messenger = ScaffoldMessenger.of(context);
-
-    final url = await _officialReportUrl(applicationId);
-    if (url == null) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            'Официальный отчёт появится после оплаты и подписания оценщиком',
-            style: const TextStyle(color: Colors.white),
-          ),
-          backgroundColor: c.warning,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    // Открываем PDF в новой вкладке (web) — клиент может скачать/сохранить.
-    try {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } catch (_) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: const Text('Не удалось открыть отчёт'),
-          backgroundColor: c.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
@@ -340,6 +307,58 @@ class CaseDetailScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                     ],
                     OptionButton(
+                      text: 'Сформировать отчёт',
+                      icon: Icons.description_rounded,
+                      backgroundColor: AppColors.of(context).surface,
+                      textColor: AppColors.of(context).textPrimary,
+                      onTap: () async {
+                        try {
+                          final c = AppColors.of(context);
+                          final messenger = ScaffoldMessenger.of(context);
+                          final report = await SupabaseService.getReportForApplication(id);
+                          final data = await SupabaseService.generateReportData(
+                            propertyType: prop['type'] ?? 'apartment',
+                            address: address,
+                            area: area,
+                            rooms: rooms ?? 1,
+                            floor: floor ?? 1,
+                            totalFloors: totalFloors ?? 1,
+                            condition: prop['condition'] ?? 'cosmetic',
+                            yearBuilt: (prop['year_built'] as int?) ?? DateTime.now().year,
+                            clientName: application['client_name'] ?? '',
+                            clientIin: application['client_iin'] ?? '',
+                          );
+                          if (data == null) {
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: const Text('Не удалось сформировать отчёт'),
+                                backgroundColor: c.error,
+                              ),
+                            );
+                            return;
+                          }
+                          final reportData = await SupabaseService.createReport(
+                            applicationId: id,
+                            reportData: data.toJson(),
+                          );
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: const Text('Отчёт сформирован'),
+                              backgroundColor: c.success,
+                            ),
+                          );
+                        } catch (e) {
+                          final c = AppColors.of(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Ошибка: $e'),
+                              backgroundColor: c.error,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    OptionButton(
                       text: 'Посмотреть отчёт',
                       icon: Icons.description_rounded,
                       backgroundColor: AppColors.of(context).surface,
@@ -352,9 +371,9 @@ class CaseDetailScreen extends StatelessWidget {
                     if (status == 'paid' || status == 'completed') ...[
                       const SizedBox(height: 12),
                       OptionButton(
-                        text: 'Скачать официальный отчёт',
-                        icon: Icons.download_rounded,
-                        onTap: () => _downloadReport(context, id),
+                        text: 'Скачивание PDF',
+                        icon: Icons.lock_rounded,
+                        onTap: null,
                       ),
                     ],
                   ],
