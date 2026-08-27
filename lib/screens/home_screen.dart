@@ -8,6 +8,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/aurora_background.dart';
 import '../widgets/scroll_reveal.dart';
+import '../widgets/assistant_tab_bar.dart';
 import '../l10n/app_strings.dart';
 import '../navigation/app_navigator.dart';
 import '../services/supabase_service.dart';
@@ -73,7 +74,12 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           const AuroraBackground(),
           SafeArea(
-        child: RefreshIndicator(
+        child: Column(
+          children: [
+            AssistantTabBar(activeTab: AssistantTab.wizard, onTabChanged: (_) {}),
+            const Divider(height: 1),
+            Expanded(
+              child: RefreshIndicator(
           onRefresh: _loadData,
           color: c.accent,
           child: CustomScrollView(
@@ -407,7 +413,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
     ),
-  );
+    ),
+  ],
+  ),
+);
   }
 
   String _buildCaseSubtitle(Map<String, dynamic> app) {
